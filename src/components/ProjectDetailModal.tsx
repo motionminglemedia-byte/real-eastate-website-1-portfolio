@@ -181,3 +181,4 @@ export default function ProjectDetailModal({ project, onClose }: ProjectDetailMo
     </div>
   );
 }
+
