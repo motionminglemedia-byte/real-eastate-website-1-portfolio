@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Volume2, VolumeX, LayoutGrid, X } from "lucide-react";
 
 export default function VideoPlayerOverlay() {
@@ -9,13 +9,98 @@ export default function VideoPlayerOverlay() {
   const [scrollProgress, setScrollProgress] = useState(5);
   const [timeDisplay, setTimeDisplay] = useState("00:01");
 
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
+
+  // Synthesize gentle Mediterranean sea breeze & ambient harmonic atmosphere via Web Audio
+  const initAmbientAudio = () => {
+    if (audioContextRef.current) return;
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new AudioCtx();
+      audioContextRef.current = ctx;
+
+      const masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      masterGain.connect(ctx.destination);
+      masterGainRef.current = masterGain;
+
+      // Synthesize ocean wave wash
+      const bufferSize = ctx.sampleRate * 4;
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      let b0 = 0, b1 = 0, b2 = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555;
+        b1 = 0.99332 * b1 + white * 0.0751;
+        b2 = 0.96900 * b2 + white * 0.1539;
+        output[i] = (b0 + b1 + b2 + white * 0.5362) * 0.04;
+      }
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = noiseBuffer;
+      noise.loop = true;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(320, ctx.currentTime);
+
+      const lfo = ctx.createOscillator();
+      lfo.frequency.setValueAtTime(0.12, ctx.currentTime);
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.setValueAtTime(180, ctx.currentTime);
+      lfo.connect(lfoGain);
+      lfoGain.connect(filter.frequency);
+      lfo.start();
+
+      noise.connect(filter);
+      filter.connect(masterGain);
+      noise.start();
+
+      // Soft architectural harmonic drone
+      [146.83, 220.0].forEach((freq) => {
+        const osc = ctx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        const oscGain = ctx.createGain();
+        oscGain.gain.setValueAtTime(0.015, ctx.currentTime);
+        osc.connect(oscGain);
+        oscGain.connect(masterGain);
+        osc.start();
+      });
+    } catch {
+      // AudioContext unavailable or blocked by browser policy
+    }
+  };
+
   const toggleMute = () => {
     const video = document.querySelector("#media-canvas-container video") as HTMLVideoElement | null;
+    const nextState = !isMuted;
+    setIsMuted(nextState);
+
+    // Sync HTML5 video audio track
     if (video) {
-      video.muted = !video.muted;
-      setIsMuted(video.muted);
+      video.muted = nextState;
+    }
+
+    // Control Web Audio atmospheric soundscape
+    if (!nextState) {
+      initAmbientAudio();
+      const ctx = audioContextRef.current;
+      const gain = masterGainRef.current;
+      if (ctx && gain) {
+        if (ctx.state === "suspended") ctx.resume();
+        gain.gain.cancelScheduledValues(ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 1.2);
+      }
     } else {
-      setIsMuted(!isMuted);
+      const ctx = audioContextRef.current;
+      const gain = masterGainRef.current;
+      if (ctx && gain) {
+        gain.gain.cancelScheduledValues(ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.8);
+      }
     }
   };
 
@@ -50,15 +135,15 @@ export default function VideoPlayerOverlay() {
           <button
             onClick={toggleMute}
             className="flex items-center gap-2 text-zinc-300 hover:text-white transition-colors group focus:outline-none"
-            aria-label={isMuted ? "Unmute audio" : "Mute audio"}
+            aria-label={isMuted ? "Unmute atmospheric sound" : "Mute atmospheric sound"}
           >
             {isMuted ? (
               <VolumeX className="w-4 h-4 text-zinc-400 group-hover:text-amber-300 transition-colors" />
             ) : (
-              <Volume2 className="w-4 h-4 text-amber-400" />
+              <Volume2 className="w-4 h-4 text-amber-400 animate-pulse" />
             )}
             <span className="text-[11px] font-mono tracking-wider uppercase text-zinc-400 group-hover:text-zinc-200">
-              {isMuted ? "Mute" : "Sound"}
+              {isMuted ? "Mute" : "Atmosphere"}
             </span>
           </button>
 
