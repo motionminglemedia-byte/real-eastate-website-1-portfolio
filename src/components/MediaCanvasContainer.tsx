@@ -1,5 +1,10 @@
 import React from "react";
-import VideoScrollScrubber from "./VideoScrollScrubber";
+import dynamic from "next/dynamic";
+
+// Dynamically import client-only video scrubber to avoid SSR vendor-chunks/gsap error
+const VideoScrollScrubber = dynamic(() => import("./VideoScrollScrubber"), {
+  ssr: false,
+});
 
 export default function MediaCanvasContainer() {
   return (

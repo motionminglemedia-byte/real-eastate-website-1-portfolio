@@ -3,7 +3,7 @@ import React from "react";
 export default function GiantHomeMask() {
   return (
     <section className="relative z-10 w-full min-h-screen flex flex-col items-center justify-center py-24 px-6 overflow-hidden">
-      {/* Background radial glow */}
+      {/* Background ambient radial glow */}
       <div className="absolute inset-0 bg-radial-gradient from-amber-500/5 via-transparent to-transparent pointer-events-none" />
 
       <div className="max-w-6xl w-full mx-auto text-center flex flex-col items-center justify-center space-y-6">
@@ -14,30 +14,69 @@ export default function GiantHomeMask() {
           <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
         </div>
 
-        {/* Giant HOME Mask Typography */}
+        {/* 
+          Giant HOME Mask Typography:
+          Uses SVG knockout mask so the fixed background video inside #media-canvas-container 
+          literally shines through the cutout letters of "HOME" as the user scrolls!
+        */}
         <div className="relative w-full flex items-center justify-center my-4 select-none">
-          {/* Subtle outline glow behind the mask */}
-          <div 
-            className="absolute inset-0 flex items-center justify-center text-[22vw] md:text-[24vw] font-black tracking-tighter text-white/[0.03] blur-sm select-none"
-            aria-hidden="true"
+          {/* SVG Knockout Mask revealing the live background video */}
+          <svg
+            className="w-full max-w-5xl h-auto block select-none pointer-events-none"
+            viewBox="0 0 1000 320"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            HOME
-          </div>
+            <defs>
+              <mask id="home-video-knockout">
+                {/* White reveals background, Black cuts out window */}
+                <rect width="100%" height="100%" fill="black" />
+                <text
+                  x="500"
+                  y="245"
+                  textAnchor="middle"
+                  fontFamily="'Plus Jakarta Sans', system-ui, sans-serif"
+                  fontSize="280"
+                  fontWeight="900"
+                  letterSpacing="-8"
+                  fill="white"
+                >
+                  HOME
+                </text>
+              </mask>
+            </defs>
 
-          {/* The Clipped "HOME" Text Mask */}
-          <h2
-            className="text-[22vw] md:text-[24vw] font-black tracking-tight leading-none text-transparent bg-clip-text select-none transition-transform duration-700 hover:scale-[1.01]"
-            style={{
-              backgroundImage: `url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=2000&q=80')`,
-              backgroundSize: "cover",
-              backgroundPosition: "center 45%",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              filter: "contrast(1.15) brightness(1.1)",
-            }}
-          >
-            HOME
-          </h2>
+            {/* Glowing amber edge stroke around the cutout */}
+            <text
+              x="500"
+              y="245"
+              textAnchor="middle"
+              fontFamily="'Plus Jakarta Sans', system-ui, sans-serif"
+              fontSize="280"
+              fontWeight="900"
+              letterSpacing="-8"
+              stroke="rgba(245, 167, 20, 0.3)"
+              strokeWidth="2"
+              fill="transparent"
+            >
+              HOME
+            </text>
+          </svg>
+
+          {/* HTML Overlay with mix-blend / background clip for ultra-vivid fallback */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <h2
+              className="text-[22vw] md:text-[23vw] font-black tracking-tighter leading-none text-transparent select-none transition-transform duration-700 hover:scale-[1.01]"
+              style={{
+                WebkitTextStroke: "1px rgba(255, 255, 255, 0.15)",
+                backgroundImage: "linear-gradient(to bottom, rgba(255,255,255,0.08), transparent)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+              }}
+            >
+              HOME
+            </h2>
+          </div>
         </div>
 
         {/* Narrative Subtitle Below */}
@@ -63,4 +102,3 @@ export default function GiantHomeMask() {
     </section>
   );
 }
-

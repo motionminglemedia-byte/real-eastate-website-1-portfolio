@@ -7,14 +7,34 @@ export default function VideoPlayerOverlay() {
   const [isMuted, setIsMuted] = useState(true);
   const [specsModalOpen, setSpecsModalOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(5);
+  const [timeDisplay, setTimeDisplay] = useState("00:01");
+
+  const toggleMute = () => {
+    const video = document.querySelector("#media-canvas-container video") as HTMLVideoElement | null;
+    if (video) {
+      video.muted = !video.muted;
+      setIsMuted(video.muted);
+    } else {
+      setIsMuted(!isMuted);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      if (docHeight > 0) {
-        const progress = Math.min(100, Math.max(0, Math.round((scrollY / docHeight) * 100)));
-        setScrollProgress(progress);
+      const video = document.querySelector("#media-canvas-container video") as HTMLVideoElement | null;
+      if (video && video.duration && !isNaN(video.currentTime)) {
+        const sec = Math.floor(video.currentTime);
+        setTimeDisplay(`00:${sec < 10 ? "0" + sec : sec}`);
+        setScrollProgress(Math.min(100, (video.currentTime / video.duration) * 100));
+      } else {
+        const scrollY = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        if (docHeight > 0) {
+          const progress = Math.min(100, Math.max(0, Math.round((scrollY / docHeight) * 100)));
+          setScrollProgress(progress);
+          const seconds = Math.min(20, Math.max(1, Math.floor((progress / 100) * 20)));
+          setTimeDisplay(`00:${seconds < 10 ? "0" + seconds : seconds}`);
+        }
       }
     };
 
@@ -22,17 +42,13 @@ export default function VideoPlayerOverlay() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Format scroll progress as video timecode (00:01 to 00:20)
-  const seconds = Math.min(20, Math.max(1, Math.floor((scrollProgress / 100) * 20)));
-  const formattedTime = `00:${seconds < 10 ? "0" + seconds : seconds}`;
-
   return (
     <>
       <div className="fixed bottom-6 inset-x-6 md:inset-x-12 z-40 flex items-center justify-between pointer-events-none select-none">
         {/* Left: Audio & Scrubber Bar */}
         <div className="flex items-center gap-3 bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 rounded-full px-4 py-2 pointer-events-auto transition-colors">
           <button
-            onClick={() => setIsMuted(!isMuted)}
+            onClick={toggleMute}
             className="flex items-center gap-2 text-zinc-300 hover:text-white transition-colors group focus:outline-none"
             aria-label={isMuted ? "Unmute audio" : "Mute audio"}
           >
@@ -57,7 +73,7 @@ export default function VideoPlayerOverlay() {
               />
             </div>
             <span className="text-[10px] font-mono tracking-wider text-zinc-400 min-w-[32px]">
-              {formattedTime}
+              {timeDisplay}
             </span>
           </div>
         </div>
@@ -65,7 +81,7 @@ export default function VideoPlayerOverlay() {
         {/* Center: Scroll Hint (subtle) */}
         <div className="hidden lg:flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] font-mono text-zinc-500 bg-black/20 backdrop-blur-sm px-4 py-1.5 rounded-full border border-white/[0.05]">
           <span className="w-1.5 h-1.5 rounded-full bg-amber-400/80 animate-ping" />
-          <span>Scroll to explore construction</span>
+          <span>Scroll to scrub timeline</span>
         </div>
 
         {/* Right: Unlock Specs Button */}
@@ -137,4 +153,3 @@ export default function VideoPlayerOverlay() {
     </>
   );
 }
-
