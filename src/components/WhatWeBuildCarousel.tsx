@@ -3,6 +3,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, BedDouble, Maximize, MapPin, ArrowUpRight } from "lucide-react";
+import ProjectDetailModal from "./ProjectDetailModal";
 
 interface Project {
   id: string;
@@ -78,6 +79,7 @@ export default function WhatWeBuildCarousel() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   const updateScrollMetrics = () => {
     if (!scrollContainerRef.current) return;
@@ -185,7 +187,10 @@ export default function WhatWeBuildCarousel() {
         {projects.map((project, idx) => (
           <div
             key={project.id}
-            onClick={() => scrollToIndex(idx)}
+            onClick={() => {
+              scrollToIndex(idx);
+              setSelectedProject(project);
+            }}
             className="flex-shrink-0 w-[310px] sm:w-[380px] md:w-[440px] aspect-[3/4] snap-center rounded-3xl overflow-hidden relative group border border-white/10 hover:border-amber-400/40 transition-all duration-500 bg-slate-900/60 shadow-2xl cursor-pointer"
           >
             {/* Background Thumbnail Image */}
@@ -260,6 +265,12 @@ export default function WhatWeBuildCarousel() {
           />
         </div>
       </div>
+
+      {/* Project Detail Lightbox Modal */}
+      <ProjectDetailModal
+        project={selectedProject}
+        onClose={() => setSelectedProject(null)}
+      />
     </section>
   );
 }
