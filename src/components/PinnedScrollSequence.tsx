@@ -78,6 +78,16 @@ export default function PinnedScrollSequence() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [activePhaseIndex, setActivePhaseIndex] = useState(0);
 
+  // Ensure the page always starts from the top (0, 0) on load/refresh
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if ("scrollRestoration" in window.history) {
+        window.history.scrollRestoration = "manual";
+      }
+      window.scrollTo(0, 0);
+    }
+  }, []);
+
   // Sync GSAP with Lenis smooth scrolling
   useLenis(() => {
     scrollTriggerRef.current?.update();
@@ -288,8 +298,8 @@ export default function PinnedScrollSequence() {
     >
       {/* Sticky Fullscreen 3D Canvas Viewport */}
       <div className="sticky top-0 w-full h-screen overflow-hidden select-none">
-        {/* Core Architecture Requirement 1: Canvas Container */}
-        <div id="media-canvas-container" className="absolute inset-0 w-full h-full bg-[#090d14] -z-10">
+        {/* Core Architecture: 3D Canvas Layer */}
+        <div className="absolute inset-0 w-full h-full bg-[#090d14] z-0">
           <canvas
             ref={canvasRef}
             className="w-full h-full block"

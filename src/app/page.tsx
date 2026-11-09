@@ -1,7 +1,7 @@
 import React from "react";
-import dynamic from "next/dynamic";
 import Navbar from "@/components/Navbar";
 import MediaCanvasContainer from "@/components/MediaCanvasContainer";
+import PinnedScrollSequence from "@/components/PinnedScrollSequence";
 import GiantHomeMask from "@/components/GiantHomeMask";
 import TurnkeyKeysSection from "@/components/TurnkeyKeysSection";
 import WhatWeBuildCarousel from "@/components/WhatWeBuildCarousel";
@@ -10,11 +10,7 @@ import FooterCTASection from "@/components/FooterCTASection";
 import VideoPlayerOverlay from "@/components/VideoPlayerOverlay";
 import SmoothScrollProvider from "@/components/SmoothScrollProvider";
 
-// Dynamically import pinned 3D sequence to avoid SSR canvas issues
-const PinnedScrollSequence = dynamic(
-  () => import("@/components/PinnedScrollSequence"),
-  { ssr: false }
-);
+
 
 export default function Home() {
   return (
