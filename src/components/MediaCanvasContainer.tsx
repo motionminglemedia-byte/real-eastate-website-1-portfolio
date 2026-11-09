@@ -1,5 +1,5 @@
 import React from "react";
-import ArchitecturalCanvasRenderer from "./ArchitecturalCanvasRenderer";
+import VideoScrollScrubber from "./VideoScrollScrubber";
 
 export default function MediaCanvasContainer() {
   return (
@@ -8,12 +8,16 @@ export default function MediaCanvasContainer() {
       className="fixed inset-0 w-full h-full -z-10 bg-[#090d14] overflow-hidden pointer-events-none select-none transition-colors duration-700"
       aria-hidden="true"
     >
-      {/* 3D Wireframe Villa & Perspective Architecture Canvas */}
-      <ArchitecturalCanvasRenderer />
+      {/* 
+        Scroll-tied background video:
+        Fixed to viewport, covers entire screen (object-cover), 
+        sits behind all UI text with GSAP ScrollTrigger scrubbing
+      */}
+      <VideoScrollScrubber />
 
-      {/* Dark slate architectural grid pattern placeholder */}
+      {/* Subtle blueprint grid overlay blending with the video */}
       <div 
-        className="absolute inset-0 opacity-[0.10]"
+        className="absolute inset-0 opacity-[0.06] pointer-events-none"
         style={{
           backgroundImage: `
             linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
@@ -24,17 +28,17 @@ export default function MediaCanvasContainer() {
       />
 
       {/* Atmospheric depth gradients */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,rgba(20,30,45,0.4)_0%,rgba(9,13,20,0.85)_100%)]" />
-      <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-[#090d14] via-[#090d14]/80 to-transparent" />
-      <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#090d14] via-[#090d14]/80 to-transparent" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,rgba(20,30,45,0.25)_0%,rgba(9,13,20,0.75)_100%)] pointer-events-none" />
+      <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-[#090d14] via-[#090d14]/70 to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#090d14] via-[#090d14]/70 to-transparent pointer-events-none" />
 
-      {/* Subtle architectural coordinates placeholder */}
-      <div className="absolute top-28 left-8 hidden md:flex items-center gap-2 text-[10px] tracking-[0.25em] font-mono text-zinc-600 uppercase">
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 animate-pulse" />
-        <span>CYPRUS 34°40&apos;N 33°02&apos;E // 3D CANVAS PIPELINE READY</span>
+      {/* Subtle architectural coordinates HUD */}
+      <div className="absolute top-28 left-8 hidden md:flex items-center gap-2 text-[10px] tracking-[0.25em] font-mono text-zinc-500 uppercase pointer-events-none">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500/80 animate-pulse" />
+        <span>CYPRUS 34°40&apos;N 33°02&apos;E // SCROLL-TIED 3D TIMELINE ACTIVE</span>
       </div>
       
-      <div className="absolute bottom-24 right-8 hidden md:block text-right text-[10px] tracking-[0.25em] font-mono text-zinc-600 uppercase">
+      <div className="absolute bottom-24 right-8 hidden md:block text-right text-[10px] tracking-[0.25em] font-mono text-zinc-500 uppercase pointer-events-none">
         <span>ELEVATION: 140M // HORIZON VIEW</span>
       </div>
     </div>
