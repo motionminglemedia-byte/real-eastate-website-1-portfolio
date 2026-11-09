@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['gsap'],
   reactStrictMode: true,
   images: {
     unoptimized: true,

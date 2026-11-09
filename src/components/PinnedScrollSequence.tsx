@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useLenis } from "@studio-freight/react-lenis";
 import { 
   Compass, 
@@ -11,10 +9,63 @@ import {
   Hammer, 
   SunMedium, 
   ArrowRight,
-  Sparkles 
+  Sparkles,
+  ArrowDown
 } from "lucide-react";
 
-const TOTAL_FRAMES = 50;
+const TOTAL_FRAMES = 80;
+
+interface PhaseInfo {
+  tag: string;
+  titleRegular: string;
+  titleItalic: string;
+  description: string;
+  meta: string[];
+  align: "left" | "right" | "center";
+}
+
+const PHASES: PhaseInfo[] = [
+  {
+    tag: "01 • ARCHITECTURAL SCHEMATIC",
+    titleRegular: "It starts",
+    titleItalic: "on paper.",
+    description: "Every line calculated before a single stone is placed. High-precision 3D structural blueprints engineered for seismic defiance and panoramic solar alignment.",
+    meta: ["ELEVATION: 140M", "CAD MODEL: REV-04", "ORIENTATION: 34° SOUTH"],
+    align: "left",
+  },
+  {
+    tag: "02 • BEDROCK EXCAVATION",
+    titleRegular: "Rooted",
+    titleItalic: "in the hill.",
+    description: "Deep foundation anchors poured directly into Mediterranean limestone. Engineered monolithic retaining walls built to withstand seismic force, coastal winds, and centuries of salt.",
+    meta: ["DEPTH: 8.5M BEDROCK ANCHOR", "SEISMIC GRADE: CLASS A", "C40/50 CONCRETE"],
+    align: "left",
+  },
+  {
+    tag: "03 • MONOLITHIC SUPERSTRUCTURE",
+    titleRegular: "Then it",
+    titleItalic: "rises.",
+    description: "Monolithic post-tensioned floor slabs and dramatic 18-meter cantilevers take shape. The architectural skeleton frames unobstructed horizon views of the surrounding peaks.",
+    meta: ["18M CANTILEVER SLAB", "EXPANSIVE SPAN", "DUAL ATRIUM CORE"],
+    align: "right",
+  },
+  {
+    tag: "04 • ARTISANAL CRAFTSMANSHIP",
+    titleRegular: "Finished",
+    titleItalic: "by hand.",
+    description: "Local quarried limestone, hand-brushed travertine, and thermal cedar crafted by veteran Mediterranean stonemasons. Infinity pool waters channeled into natural stone channels.",
+    meta: ["HAND-CHISELLED LIMESTONE", "THERMAL CEDAR", "22M SALTWATER POOL"],
+    align: "right",
+  },
+  {
+    tag: "05 • THE FINISHED ESTATE",
+    titleRegular: "Made for",
+    titleItalic: "long summers.",
+    description: "Floor-to-ceiling panoramic glass, heated saltwater reflection pool, and bespoke interior appointments come to life under twilight Mediterranean skies. Ready for effortless family living.",
+    meta: ["TURNKEY DELIVERY", "NET ZERO A+", "PRIVATE HORIZON VISTA"],
+    align: "left",
+  },
+];
 
 export default function PinnedScrollSequence() {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -22,31 +73,26 @@ export default function PinnedScrollSequence() {
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const currentFrameRef = useRef<number>(0);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [activePhaseIndex, setActivePhaseIndex] = useState(0);
 
   // Sync GSAP with Lenis smooth scrolling
   useLenis(() => {
     ScrollTrigger.update();
   });
 
-  // 1. Preload the 50 PNG frames
+  // 1. Preload the 80 JPG frames extracted from 11.mp4
   useEffect(() => {
-    let loadedCount = 0;
     const images: HTMLImageElement[] = [];
 
     for (let i = 1; i <= TOTAL_FRAMES; i++) {
       const img = new Image();
       const frameNum = String(i).padStart(3, "0");
-      img.src = `/frames/ezgif-frame-${frameNum}.png`;
+      img.src = `/frames/frame_${frameNum}.jpg`;
 
       img.onload = () => {
-        loadedCount++;
         // As soon as the first frame loads, paint it immediately
         if (i === 1) {
           drawFrame(0);
-        }
-        if (loadedCount >= TOTAL_FRAMES) {
-          setImagesLoaded(true);
         }
       };
       images.push(img);
@@ -55,7 +101,7 @@ export default function PinnedScrollSequence() {
     imagesRef.current = images;
   }, []);
 
-  // 2. Draw frame with high-performance object-fit: cover math
+  // 2. High-performance canvas drawing with object-fit: cover
   const drawFrame = (frameIndex: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -68,7 +114,6 @@ export default function PinnedScrollSequence() {
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
 
-    // Calculate object-fit: cover
     const imgRatio = img.naturalWidth / img.naturalHeight;
     const canvasRatio = canvasWidth / canvasHeight;
 
@@ -89,7 +134,7 @@ export default function PinnedScrollSequence() {
     ctx.drawImage(img, offsetX, offsetY, renderWidth, renderHeight);
   };
 
-  // 3. Handle Canvas Resizing
+  // 3. Canvas Responsive Resize
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -106,71 +151,120 @@ export default function PinnedScrollSequence() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // 4. GSAP ScrollTrigger Pinned Sequence
+  // 4. GSAP ScrollTrigger Pinned Sequence (dynamically imported client-side only to prevent SSR/vendor-chunk issues)
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-
-    const container = containerRef.current;
-    if (!container) return;
-
-    let targetFrame = 0;
-    let animatedFrame = 0;
     let animationId: number;
+    let ctx: any;
+    let isCancelled = false;
 
-    const updateCanvasLoop = () => {
-      // Smooth interpolation between frames for 60fps cinema feel
-      animatedFrame += (targetFrame - animatedFrame) * 0.25;
-      const rounded = Math.min(
-        TOTAL_FRAMES - 1,
-        Math.max(0, Math.round(animatedFrame))
-      );
+    const init = async () => {
+      const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([
+        import("gsap"),
+        import("gsap/ScrollTrigger"),
+      ]);
 
-      if (rounded !== currentFrameRef.current) {
-        currentFrameRef.current = rounded;
-        drawFrame(rounded);
-      }
+      if (isCancelled) return;
 
+      gsap.registerPlugin(ScrollTrigger);
+
+      const container = containerRef.current;
+      if (!container) return;
+
+      let targetFrame = 0;
+      let animatedFrame = 0;
+
+      const updateCanvasLoop = () => {
+        // Smooth interpolation for fluid cinematic 60fps frame scrubbing
+        animatedFrame += (targetFrame - animatedFrame) * 0.22;
+        const rounded = Math.min(
+          TOTAL_FRAMES - 1,
+          Math.max(0, Math.round(animatedFrame))
+        );
+
+        if (rounded !== currentFrameRef.current) {
+          currentFrameRef.current = rounded;
+          drawFrame(rounded);
+        }
+
+        animationId = requestAnimationFrame(updateCanvasLoop);
+      };
       animationId = requestAnimationFrame(updateCanvasLoop);
-    };
-    animationId = requestAnimationFrame(updateCanvasLoop);
 
-    const ctx = gsap.context(() => {
-      ScrollTrigger.create({
-        trigger: container,
-        start: "top top",
-        end: "bottom bottom",
-        scrub: true,
-        onUpdate: (self) => {
-          const progress = self.progress;
-          setScrollProgress(progress);
-          targetFrame = progress * (TOTAL_FRAMES - 1);
-        },
+      ctx = gsap.context(() => {
+        ScrollTrigger.create({
+          trigger: container,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: true,
+          onUpdate: (self: any) => {
+            const progress = self.progress;
+            setScrollProgress(progress);
+            targetFrame = progress * (TOTAL_FRAMES - 1);
+
+            // Calculate current phase index (0 to 4)
+            const phase = Math.min(4, Math.floor(progress * 5));
+            setActivePhaseIndex(phase);
+          },
+        });
       });
-    });
+    };
+
+    init();
 
     return () => {
-      cancelAnimationFrame(animationId);
-      ctx.revert();
+      isCancelled = true;
+      if (animationId) cancelAnimationFrame(animationId);
+      if (ctx) ctx.revert();
     };
   }, []);
 
-  // Helper opacity calculators for smooth fading between the 5 story beats
-  // Beat 1: 0.00 - 0.20 (Center)
-  const beat1Opacity = Math.max(0, Math.min(1, (0.16 - scrollProgress) / 0.10));
-  // Beat 2: 0.20 - 0.40 (Left)
-  const beat2Opacity = Math.max(0, 1 - Math.abs(scrollProgress - 0.28) / 0.10);
-  // Beat 3: 0.40 - 0.60 (Right)
-  const beat3Opacity = Math.max(0, 1 - Math.abs(scrollProgress - 0.48) / 0.10);
-  // Beat 4: 0.60 - 0.80 (Right)
-  const beat4Opacity = Math.max(0, 1 - Math.abs(scrollProgress - 0.68) / 0.10);
-  // Beat 5: 0.80 - 1.00 (Left)
-  const beat5Opacity = Math.max(0, Math.min(1, (scrollProgress - 0.80) / 0.10));
+  // Calculate smooth fade-in / fade-out opacity and vertical drift for each phase
+  const getPhaseStyles = (index: number) => {
+    // Each phase covers 20% of scroll progress: [0-0.2], [0.2-0.4], [0.4-0.6], [0.6-0.8], [0.8-1.0]
+    const phaseCenter = (index + 0.5) / 5;
+    const distance = Math.abs(scrollProgress - phaseCenter);
+    const maxDistance = 0.12;
+
+    let opacity = 0;
+    let translateY = 0;
+
+    if (index === 0) {
+      // Phase 0 starts fully visible at top
+      if (scrollProgress <= 0.12) {
+        opacity = 1;
+        translateY = 0;
+      } else {
+        opacity = Math.max(0, 1 - (scrollProgress - 0.12) / 0.08);
+        translateY = -(scrollProgress - 0.12) * 120;
+      }
+    } else if (index === 4) {
+      // Phase 4 stays visible toward end
+      if (scrollProgress >= 0.82) {
+        opacity = 1;
+        translateY = 0;
+      } else {
+        opacity = Math.max(0, (scrollProgress - 0.74) / 0.08);
+        translateY = (0.82 - scrollProgress) * 120;
+      }
+    } else {
+      // Middle phases peak in center and fade smoothly
+      opacity = Math.max(0, 1 - distance / maxDistance);
+      translateY = (phaseCenter - scrollProgress) * 100;
+    }
+
+    return {
+      opacity,
+      transform: `translateY(${translateY}px)`,
+      pointerEvents: (opacity > 0.4 ? "auto" : "none") as "auto" | "none",
+      visibility: (opacity > 0.01 ? "visible" : "hidden") as "visible" | "hidden",
+    };
+  };
 
   return (
     <div
       ref={containerRef}
       className="relative w-full"
-      style={{ height: "480vh" }} // 480vh provides generous, tactile scroll travel for 50 frames
+      style={{ height: "520vh" }} // 520vh gives generous, slow and deliberate scroll travel for all 80 frames
     >
       {/* Sticky Fullscreen 3D Canvas Viewport */}
       <div className="sticky top-0 w-full h-screen overflow-hidden select-none">
@@ -187,173 +281,110 @@ export default function PinnedScrollSequence() {
         <div className="absolute top-0 inset-x-0 h-36 bg-gradient-to-b from-[#090c10]/80 via-[#090c10]/30 to-transparent pointer-events-none" />
         <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#090c10] via-[#090c10]/50 to-transparent pointer-events-none" />
 
-        {/* Frame / HUD Coordinate Indicator */}
-        <div className="absolute top-28 left-8 hidden md:flex items-center gap-2 text-[10px] tracking-[0.25em] font-mono text-zinc-400 uppercase pointer-events-none z-20">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-          <span>CYPRUS 34°40&apos;N 33°02&apos;E // 3D SCROLL SEQUENCE</span>
-          <span className="text-zinc-600">•</span>
-          <span className="text-amber-300 font-bold">
-            FRAME {String(currentFrameRef.current + 1).padStart(2, "0")} / {TOTAL_FRAMES}
-          </span>
+        {/* Top Floating HUD Timeline & Phase Indicators */}
+        <div className="absolute top-24 left-6 lg:left-12 right-6 lg:right-12 flex items-center justify-between pointer-events-none z-20">
+          {/* Coordinates & Frame Counter */}
+          <div className="flex items-center gap-2.5 text-[10px] tracking-[0.25em] font-mono text-zinc-300 uppercase bg-black/40 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span>3D TIMELINE</span>
+            <span className="text-zinc-600">•</span>
+            <span className="text-amber-300 font-bold">
+              FRAME {String(currentFrameRef.current + 1).padStart(2, "0")} / {TOTAL_FRAMES}
+            </span>
+          </div>
+
+          {/* 5-Step Phase Milestone Pills */}
+          <div className="hidden md:flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+            {PHASES.map((p, idx) => {
+              const isActive = idx === activePhaseIndex;
+              return (
+                <div
+                  key={idx}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono tracking-wider uppercase transition-all duration-300 ${
+                    isActive
+                      ? "bg-amber-400/20 text-amber-300 border border-amber-400/40"
+                      : "text-zinc-500 hover:text-zinc-400"
+                  }`}
+                >
+                  <span className={`w-1 h-1 rounded-full ${isActive ? "bg-amber-400" : "bg-zinc-600"}`} />
+                  <span>PHASE 0{idx + 1}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* =========================================================================
-            STORY TEXT OVERLAYS: Transformed smoothly in response to the 3D frames
+            CINEMATIC NARRATIVE PHASES: Defining the house as you slowly scroll
            ========================================================================= */}
+        {PHASES.map((phase, idx) => {
+          const styles = getPhaseStyles(idx);
+          const isRight = phase.align === "right";
 
-        {/* BEAT 1: "It starts on paper." (Progress 0.0 - 0.20) */}
-        <div 
-          className="absolute inset-0 flex items-center justify-between px-6 lg:px-16 max-w-7xl mx-auto z-10 transition-opacity duration-300 pointer-events-none"
-          style={{ opacity: beat1Opacity }}
-        >
-          <div className="max-w-xl space-y-6 pointer-events-auto">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/25 text-amber-300 text-[11px] font-mono tracking-[0.2em] uppercase">
-              <Compass className="w-3.5 h-3.5 text-amber-300" />
-              <span>01 • THE PLAN</span>
+          return (
+            <div
+              key={idx}
+              className={`absolute inset-0 flex items-center px-6 lg:px-16 max-w-7xl mx-auto z-10 transition-opacity duration-300 ${
+                isRight ? "justify-end text-right" : "justify-start text-left"
+              }`}
+              style={styles}
+            >
+              <div className={`max-w-xl space-y-6 ${isRight ? "flex flex-col items-end" : ""}`}>
+                {/* Phase Tag Pill */}
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/25 text-amber-300 text-[11px] font-mono tracking-[0.2em] uppercase">
+                  {idx === 0 && <Compass className="w-3.5 h-3.5 text-amber-300" />}
+                  {idx === 1 && <Layers className="w-3.5 h-3.5 text-amber-300" />}
+                  {idx === 2 && <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />}
+                  {idx === 3 && <Hammer className="w-3.5 h-3.5 text-amber-300" />}
+                  {idx === 4 && <SunMedium className="w-3.5 h-3.5 text-amber-300" />}
+                  <span>{phase.tag}</span>
+                </div>
+
+                {/* Main Headline with Serif + Italic Signature */}
+                <h2 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem] tracking-tight text-white leading-[1.05]">
+                  {phase.titleRegular}{" "}
+                  <span className="font-serif italic font-normal text-amber-200/90 text-glow">
+                    {phase.titleItalic}
+                  </span>
+                </h2>
+
+                {/* Defined Narrative Description */}
+                <p className="text-base sm:text-lg md:text-xl text-zinc-300/90 font-light leading-relaxed">
+                  {phase.description}
+                </p>
+
+                {/* Technical Specifications Pills */}
+                <div className={`flex flex-wrap gap-2.5 pt-2 text-xs font-mono text-zinc-400 ${isRight ? "justify-end" : ""}`}>
+                  {phase.meta.map((item, mIdx) => (
+                    <span
+                      key={mIdx}
+                      className="px-3 py-1 rounded-full bg-black/50 border border-white/10 text-zinc-300 backdrop-blur-sm"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Final Phase CTA prompting the user into the rest of the site */}
+                {idx === 4 && (
+                  <div className="pt-4 flex items-center gap-4">
+                    <a
+                      href="#projects"
+                      className="group inline-flex items-center gap-3 px-7 py-3.5 rounded-full text-xs font-semibold tracking-widest uppercase bg-amber-400 text-black hover:bg-amber-300 transition-all duration-300 shadow-xl shadow-amber-400/25"
+                    >
+                      <span>Explore Portfolio</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </a>
+                    <span className="text-xs font-mono text-zinc-400 flex items-center gap-1.5">
+                      <span>Scroll to unveil full estate</span>
+                      <ArrowDown className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-
-            <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem] tracking-tight text-white leading-[1.05]">
-              It starts{" "}
-              <span className="font-serif italic font-normal text-amber-200/90 text-glow">
-                on paper.
-              </span>
-            </h1>
-
-            <p className="text-base sm:text-lg md:text-xl text-zinc-300/90 font-light leading-relaxed">
-              Every Pheme house starts with a blueprint... and ends with a masterpiece.
-              Built before a single stone is laid.
-            </p>
-
-            <div className="flex items-center gap-3 text-xs font-mono text-amber-300/80 tracking-widest pt-2">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-              <span>SCROLL TO BUILD YOUR ESTATE ↓</span>
-            </div>
-          </div>
-        </div>
-
-        {/* BEAT 2: "Rooted in the hill." (Progress 0.20 - 0.40) */}
-        <div 
-          className="absolute inset-0 flex items-center px-6 lg:px-16 max-w-7xl mx-auto z-10 transition-opacity duration-300 pointer-events-none"
-          style={{ opacity: beat2Opacity }}
-        >
-          <div className="max-w-xl space-y-6 pointer-events-auto">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/25 text-amber-300 text-[11px] font-mono tracking-[0.2em] uppercase">
-              <Layers className="w-3.5 h-3.5 text-amber-300" />
-              <span>02 • THE FOUNDATION</span>
-            </div>
-
-            <h2 className="font-serif text-5xl sm:text-6xl md:text-7xl tracking-tight text-white leading-[1.08]">
-              Rooted{" "}
-              <span className="font-serif italic font-normal text-amber-200/90 text-glow">
-                in the hill.
-              </span>
-            </h2>
-
-            <p className="text-base sm:text-lg md:text-xl text-zinc-300/90 font-light leading-relaxed">
-              Solid foundations, poured deep into Cyprus rock. Built to withstand time, wind, and salt.
-            </p>
-
-            <div className="flex items-center gap-4 text-xs font-mono text-zinc-400">
-              <span className="px-3 py-1 rounded bg-black/40 border border-white/10">DEPTH: 8.5M BEDROCK ANCHOR</span>
-              <span className="px-3 py-1 rounded bg-black/40 border border-white/10">SEISMIC GRADE A</span>
-            </div>
-          </div>
-        </div>
-
-        {/* BEAT 3: "Then it rises." (Progress 0.40 - 0.60) - Right Aligned */}
-        <div 
-          className="absolute inset-0 flex items-center justify-end px-6 lg:px-16 max-w-7xl mx-auto z-10 transition-opacity duration-300 pointer-events-none text-right"
-          style={{ opacity: beat3Opacity }}
-        >
-          <div className="max-w-xl space-y-6 pointer-events-auto flex flex-col items-end">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/25 text-amber-300 text-[11px] font-mono tracking-[0.2em] uppercase">
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
-              <span>03 • THE STRUCTURE</span>
-            </div>
-
-            <h2 className="font-serif text-5xl sm:text-6xl md:text-7xl tracking-tight text-white leading-[1.08]">
-              Then it{" "}
-              <span className="font-serif italic font-normal text-amber-200/90 text-glow">
-                rises.
-              </span>
-            </h2>
-
-            <p className="text-base sm:text-lg md:text-xl text-zinc-300/90 font-light leading-relaxed">
-              Monolithic reinforced concrete engineered to defy seismic force while framing unobstructed horizon views of the Mediterranean.
-            </p>
-
-            <div className="flex items-center gap-4 text-xs font-mono text-zinc-400">
-              <span className="px-3 py-1 rounded bg-black/40 border border-white/10">POST-TENSIONED SLABS</span>
-              <span className="px-3 py-1 rounded bg-black/40 border border-white/10">18M CANTILEVER</span>
-            </div>
-          </div>
-        </div>
-
-        {/* BEAT 4: "Finished by hand." (Progress 0.60 - 0.80) - Right Aligned */}
-        <div 
-          className="absolute inset-0 flex items-center justify-end px-6 lg:px-16 max-w-7xl mx-auto z-10 transition-opacity duration-300 pointer-events-none text-right"
-          style={{ opacity: beat4Opacity }}
-        >
-          <div className="max-w-xl space-y-6 pointer-events-auto flex flex-col items-end">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/25 text-amber-300 text-[11px] font-mono tracking-[0.2em] uppercase">
-              <Hammer className="w-3.5 h-3.5 text-amber-300" />
-              <span>04 • THE CRAFT</span>
-            </div>
-
-            <h2 className="font-serif text-5xl sm:text-6xl md:text-7xl tracking-tight text-white leading-[1.08]">
-              Finished{" "}
-              <span className="font-serif italic font-normal text-amber-200/90 text-glow">
-                by hand.
-              </span>
-            </h2>
-
-            <p className="text-base sm:text-lg md:text-xl text-zinc-300/90 font-light leading-relaxed">
-              Local limestone, hand-brushed travertine, and thermal cedar crafted by veteran Mediterranean artisans.
-            </p>
-
-            <div className="flex items-center gap-4 text-xs font-mono text-zinc-400">
-              <span className="px-3 py-1 rounded bg-black/40 border border-white/10">CYPRIOT QUARRIED STONE</span>
-              <span className="px-3 py-1 rounded bg-black/40 border border-white/10">BRUSHED AGED BRASS</span>
-            </div>
-          </div>
-        </div>
-
-        {/* BEAT 5: "Made for long summers." (Progress 0.80 - 1.00) - Left Aligned */}
-        <div 
-          className="absolute inset-0 flex items-center px-6 lg:px-16 max-w-7xl mx-auto z-10 transition-opacity duration-300 pointer-events-none"
-          style={{ opacity: beat5Opacity }}
-        >
-          <div className="max-w-xl space-y-6 pointer-events-auto">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/25 text-amber-300 text-[11px] font-mono tracking-[0.2em] uppercase">
-              <SunMedium className="w-3.5 h-3.5 text-amber-300" />
-              <span>05 • THE LIVING</span>
-            </div>
-
-            <h2 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white leading-[1.05]">
-              Made for{" "}
-              <span className="font-serif italic font-normal text-amber-200/90 text-glow">
-                long summers.
-              </span>
-            </h2>
-
-            <p className="text-base sm:text-lg md:text-xl text-zinc-300/90 font-light leading-relaxed">
-              Seamless indoor-outdoor terraces, infinity saltwater pools, and panoramic glass framing Aegean sunsets.
-            </p>
-
-            <div className="pt-2 flex items-center gap-3">
-              <a
-                href="#projects"
-                className="group inline-flex items-center gap-3 px-6 py-3 rounded-full text-xs font-semibold tracking-widest uppercase bg-amber-400 text-black hover:bg-amber-300 transition-all duration-300 shadow-lg shadow-amber-400/20"
-              >
-                <span>Explore the Estate</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </a>
-              <span className="text-xs font-mono text-zinc-400">
-                SCROLL DOWN TO UNVEIL PORTFOLIO ↓
-              </span>
-            </div>
-          </div>
-        </div>
+          );
+        })}
       </div>
     </div>
   );

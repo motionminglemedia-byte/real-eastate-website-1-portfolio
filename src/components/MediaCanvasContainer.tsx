@@ -13,8 +13,8 @@ export default function MediaCanvasContainer() {
         into the rest of the website (HOME mask, carousel, stats, footer).
       */}
       <div 
-        className="absolute inset-0 bg-cover bg-center opacity-30"
-        style={{ backgroundImage: `url('/frames/ezgif-frame-050.png')` }}
+        className="absolute inset-0 bg-cover bg-center opacity-35"
+        style={{ backgroundImage: `url('/frames/frame_080.jpg')` }}
       />
 
       {/* Subtle blueprint grid overlay */}
@@ -31,8 +31,8 @@ export default function MediaCanvasContainer() {
 
       {/* Atmospheric depth gradients */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,rgba(20,30,45,0.2)_0%,rgba(9,13,20,0.85)_100%)] pointer-events-none" />
-      <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-[#090d14] via-[#090d14]/70 to-transparent pointer-events-none" />
-      <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#090d14] via-[#090d14]/70 to-transparent pointer-events-none" />
+      <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-[#090c10] via-[#090c10]/70 to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#090c10] via-[#090c10]/70 to-transparent pointer-events-none" />
     </div>
   );
 }
