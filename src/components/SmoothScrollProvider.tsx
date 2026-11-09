@@ -12,10 +12,10 @@ export default function SmoothScrollProvider({
     <ReactLenis
       root
       options={{
-        duration: 0.6,
+        duration: 0.9,
         easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        wheelMultiplier: 1.8,
-        touchMultiplier: 2.5,
+        wheelMultiplier: 1.15,
+        touchMultiplier: 1.8,
         smoothWheel: true,
         syncTouch: false,
       }}

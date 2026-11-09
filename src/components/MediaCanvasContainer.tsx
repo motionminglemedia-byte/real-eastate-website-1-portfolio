@@ -14,7 +14,7 @@ export default function MediaCanvasContainer() {
       */}
       <div 
         className="absolute inset-0 bg-cover bg-center opacity-35"
-        style={{ backgroundImage: `url('/frames/frame_080.jpg')` }}
+        style={{ backgroundImage: `url('/frames/frame_160.jpg')` }}
       />
 
       {/* Subtle blueprint grid overlay */}

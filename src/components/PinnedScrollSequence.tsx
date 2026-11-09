@@ -13,7 +13,7 @@ import {
   ArrowDown
 } from "lucide-react";
 
-const TOTAL_FRAMES = 80;
+const TOTAL_FRAMES = 160;
 
 interface PhaseInfo {
   tag: string;
@@ -176,8 +176,14 @@ export default function PinnedScrollSequence() {
       let animatedFrame = 0;
 
       const updateCanvasLoop = () => {
-        // Smooth interpolation for fluid cinematic 60fps frame scrubbing
-        animatedFrame += (targetFrame - animatedFrame) * 0.22;
+        // High-precision adaptive interpolation: silky smooth and zero sluggishness
+        const delta = targetFrame - animatedFrame;
+        animatedFrame += delta * 0.36;
+
+        if (Math.abs(delta) < 0.04) {
+          animatedFrame = targetFrame;
+        }
+
         const rounded = Math.min(
           TOTAL_FRAMES - 1,
           Math.max(0, Math.round(animatedFrame))
@@ -267,7 +273,7 @@ export default function PinnedScrollSequence() {
     <div
       ref={containerRef}
       className="relative w-full"
-      style={{ height: "520vh" }} // 520vh gives generous, slow and deliberate scroll travel for all 80 frames
+      style={{ height: "460vh" }} // 460vh provides fluid, balanced scroll travel for all 160 frames
     >
       {/* Sticky Fullscreen 3D Canvas Viewport */}
       <div className="sticky top-0 w-full h-screen overflow-hidden select-none">
