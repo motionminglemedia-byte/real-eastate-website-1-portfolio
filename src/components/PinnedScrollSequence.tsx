@@ -72,12 +72,13 @@ export default function PinnedScrollSequence() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const currentFrameRef = useRef<number>(0);
+  const scrollTriggerRef = useRef<any>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [activePhaseIndex, setActivePhaseIndex] = useState(0);
 
   // Sync GSAP with Lenis smooth scrolling
   useLenis(() => {
-    ScrollTrigger.update();
+    scrollTriggerRef.current?.update();
   });
 
   // 1. Preload the 80 JPG frames extracted from 11.mp4
@@ -165,6 +166,7 @@ export default function PinnedScrollSequence() {
 
       if (isCancelled) return;
 
+      scrollTriggerRef.current = ScrollTrigger;
       gsap.registerPlugin(ScrollTrigger);
 
       const container = containerRef.current;
@@ -213,6 +215,7 @@ export default function PinnedScrollSequence() {
 
     return () => {
       isCancelled = true;
+      scrollTriggerRef.current = null;
       if (animationId) cancelAnimationFrame(animationId);
       if (ctx) ctx.revert();
     };
