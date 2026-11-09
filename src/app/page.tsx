@@ -1,8 +1,7 @@
 import React from "react";
+import dynamic from "next/dynamic";
 import Navbar from "@/components/Navbar";
 import MediaCanvasContainer from "@/components/MediaCanvasContainer";
-import HeroSection from "@/components/HeroSection";
-import StorySections from "@/components/StorySections";
 import GiantHomeMask from "@/components/GiantHomeMask";
 import TurnkeyKeysSection from "@/components/TurnkeyKeysSection";
 import WhatWeBuildCarousel from "@/components/WhatWeBuildCarousel";
@@ -11,26 +10,35 @@ import FooterCTASection from "@/components/FooterCTASection";
 import VideoPlayerOverlay from "@/components/VideoPlayerOverlay";
 import SmoothScrollProvider from "@/components/SmoothScrollProvider";
 
+// Dynamically import pinned 3D sequence to avoid SSR canvas issues
+const PinnedScrollSequence = dynamic(
+  () => import("@/components/PinnedScrollSequence"),
+  { ssr: false }
+);
+
 export default function Home() {
   return (
     <SmoothScrollProvider>
-      <main className="relative min-h-screen text-[#f4f4f6]">
+      <main className="relative min-h-screen text-[#f4f4f6] bg-[#090c10]">
         {/* Fixed Full-Screen Background Canvas Container */}
-        {/* Core Architecture Requirement 1: */}
-        {/* Fixed, full-screen background element <div id="media-canvas-container"> with a dark slate placeholder color */}
         <MediaCanvasContainer />
 
         {/* Floating Top Navigation */}
         <Navbar />
 
-        {/* Scrollable UI Content Sections */}
-        <div className="relative z-10 flex flex-col">
-          {/* 01: Hero "It starts on paper." */}
-          <HeroSection />
+        {/* 
+          1. Initial Pinned 3D Scrollytelling Sequence:
+          When the user lands on the website and starts scrolling, 
+          the 50 frames flow smoothly in real time while the viewport is pinned.
+        */}
+        <PinnedScrollSequence />
 
-          {/* 02-05: Narrative Construction Story Sections */}
-          <StorySections />
-
+        {/* 
+          2. Downward Flow into the Rest of the Website:
+          Once the full sequence finishes, the page unpins and the user scrolls 
+          down into the rest of the website.
+        */}
+        <div className="relative z-10 flex flex-col bg-[#090c10]/90 backdrop-blur-sm">
           {/* 06: Giant "HOME" Mask Typography Section */}
           <GiantHomeMask />
 
@@ -53,4 +61,3 @@ export default function Home() {
     </SmoothScrollProvider>
   );
 }
-
