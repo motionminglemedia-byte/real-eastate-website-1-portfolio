@@ -81,3 +81,51 @@ body {
   text-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
 }
 
+/* Volumetric atmospheric fog animations */
+@keyframes fogDrift1 {
+  0% {
+    transform: translate3d(-3%, -1%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(3%, 1%, 0) scale(1.06);
+  }
+  100% {
+    transform: translate3d(-3%, -1%, 0) scale(1);
+  }
+}
+
+@keyframes fogDrift2 {
+  0% {
+    transform: translate3d(4%, 2%, 0) scale(1.05);
+  }
+  50% {
+    transform: translate3d(-4%, -2%, 0) scale(0.97);
+  }
+  100% {
+    transform: translate3d(4%, 2%, 0) scale(1.05);
+  }
+}
+
+@keyframes lightPulse {
+  0%, 100% {
+    opacity: 0.6;
+    filter: drop-shadow(0 0 35px rgba(251, 191, 36, 0.25));
+  }
+  50% {
+    opacity: 0.9;
+    filter: drop-shadow(0 0 60px rgba(251, 191, 36, 0.45));
+  }
+}
+
+.animate-fog-1 {
+  animation: fogDrift1 20s ease-in-out infinite alternate;
+}
+
+.animate-fog-2 {
+  animation: fogDrift2 26s ease-in-out infinite alternate;
+}
+
+.animate-light-pulse {
+  animation: lightPulse 6s ease-in-out infinite;
+}
+
